@@ -1,6 +1,0 @@
-fly
-fly_head
-fly_ab
-fly_ch
-fly_sing
-fly_mating
