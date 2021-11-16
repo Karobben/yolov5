@@ -1,4 +1,5 @@
 <p>
+About YOLOv5:<br>
 YOLOv5 🚀 is a family of object detection architectures and models pretrained on the COCO dataset, and represents <a href="https://ultralytics.com">Ultralytics</a>
  open-source research into future vision AI methods, incorporating lessons learned and best practices evolved over thousands of hours of research and development.
 </p>
@@ -9,11 +10,11 @@ YOLOv5 🚀 is a family of object detection architectures and models pretrained 
 -->
 </div>
 
-## <div align="center">Document</div>
+## <div align="center">Document &#129712;蝇  </div>
 
 ==Before doing every thing:==
 ```bash
-mkdir ../png_DB
+mkdir ../png_DB csv
 mkdir ../png_DB/png
 ```
 <pre>
@@ -43,8 +44,15 @@ A customized script for specific output.
 
 Quick start:
 
+
+:fly:
+:mosquito:
+:microbe:
+
 ```python
-mkdir csv png
+mkdir csv ../png_DB
+mkdir ../png_DB/png
+
 python3 detect_2.py --weight runs/train/exp/weights/best.pt  --source test.mp4 --view-img  --conf-thres 0.4 --chain-det
 python3 path_ink.py -i test.mp4
 ```
