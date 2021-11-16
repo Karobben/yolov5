@@ -11,7 +11,7 @@ import os, math
 import sys
 from pathlib import Path
 import pandas as pd
-import cv2, json
+import cv2
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -220,7 +220,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         dt[1] += t3 - t2
 
         # NMS
-        pred1 = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+        pred1 = non_max_suppression(pred, conf_thres, iou_thres, 0, agnostic_nms, max_det=max_det)
         pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
         dt[2] += time_sync() - t3
 
@@ -260,8 +260,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
                 # Write results
                 Lable_Result = []
-                #print("\n\nLet's test\n\n")
-                #print(reversed(det))
+                print("\n\nLet's test\n\n")
+                print(reversed(det))
                 for *xyxy, conf, cls in reversed(det):
                     #if save_txt:  # Write to file
                     xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -292,7 +292,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             ############
             def FLY_matrix_update(FLY_matrix, FLY_matrix_tmp, frame):
                 MATCH_result = fly_align.align(FLY_matrix, FLY_matrix_tmp, frame)
-                #print("MATCH_result", MATCH_result)
+                print("MATCH_result", MATCH_result)
                 FLY_LIST = {v: k for k, v in MATCH_result.items()} # Revers the values and keys
                 FLY_LIST = {v: k for k, v in sorted(FLY_LIST.items(), key=lambda item: item[1])} # sort the diction
                 #print("FLY_LIST", FLY_LIST)
@@ -444,7 +444,11 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     break
 
             if view_img:
-                cv2.imshow(str(p), im0)
+                try:
+                    cv2.imshow(str(p), im0)
+                except:
+                    skip()
+                ## show and save the image here
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)
@@ -493,9 +497,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         ink_TB.to_csv( "csv/" + Video + "_ink.csv")
         ink_TB2 = pd.DataFrame(INK_mv_index)
         ink_TB2.to_csv("csv/" + Video + "_mv_index.csv")
-
-    with open("sample.json", "w") as outfile:
-        json.dump(FLY_matrix, outfile)
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
