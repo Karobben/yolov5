@@ -44,5 +44,35 @@ A customized script for specific output.
 Quick start:
 
 ```python
-python3 detect_2.py --weight runs/train/exp/weights/best.pt  --source test.mp4 --view-img  --conf-thres 0.4 --img-save
+mkdir csv png
+python3 detect_2.py --weight runs/train/exp/weights/best.pt  --source test.mp4 --view-img  --conf-thres 0.4 --chain-det
+python3 path_ink.py -i test.mp4
 ```
+
+To do work
+
+
+Training:
+  - [x] 5 k training set
+  - [ ] 10k training set
+  - [ ] 20k training set
+  - [ ] 50k training set
+  - [ ] 100k training set
+
+Features:
+  - [X] path ink
+  - [X] save images and annotations
+  - [X] Flies detection
+  - [X] Flies head detection
+  - [X] Chasing Behaviors
+    - [ ] Chasing duration
+  - [ ] Chains
+    - [X] Chain by radium
+    - [ ] Chasing correction
+    - [ ] Chasing duration
+  - [ ] Mating
+  - [ ] Tracking
+    - [ ] Tracking by latest dots
+    - [ ] Tracking correction
+    - [ ] Tracking Tracking
+    - [ ] Movement statistics
