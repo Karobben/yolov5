@@ -14,6 +14,7 @@
 *.TIFF
 *.HEIC
 *.mp4
+*.MP4
 *.mov
 *.MOV
 *.avi
@@ -22,6 +23,7 @@
 *.cfg
 !setup.cfg
 !cfg/yolov3*.cfg
+*.csv
 
 storage.googleapis.com
 runs/*
@@ -30,6 +32,15 @@ data/*
 !data/images/zidane.jpg
 !data/images/bus.jpg
 !data/*.sh
+
+other_tools
+csv/*
+csv*
+csv_model_600_l
+csv_mode*
+test*
+*.ipynb
+*.pt
 
 results*.csv
 
