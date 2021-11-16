@@ -7,10 +7,10 @@ Usage:
 """
 
 import argparse
-import os
+import os, math
 import sys
 from pathlib import Path
-
+import pandas as pd
 import cv2
 import numpy as np
 import torch
@@ -48,7 +48,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         view_img=False,  # show results
-        img_save = True,
         save_txt=True,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
         save_crop=False,  # save cropped prediction boxes
@@ -66,6 +65,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
+        img_save = False,
+        bh_count = False,
+        chain_det = False,
         ):
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -142,7 +144,19 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     dt, seen = [0.0, 0.0, 0.0], 0
     Num_frame = 0
 
+    ############
+    ### Karobben
+    ############
+
+    # Karobben: behaviors count
+    Video = source.split("/")[-1]
+    if bh_count:
+        os.system("rm  csv/" + Video+".csv")
+
     for path, img, im0s, vid_cap, s in dataset:
+
+        Num_frame += 1 ## Karobben - -
+
 
         t1 = time_sync()
         if onnx:
@@ -198,6 +212,11 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         if classify:
             pred = apply_classifier(pred, modelc, img, im0s)
 
+        # Karobben: behaviors count
+        if bh_count:
+            FF = open("csv/" + Video+".csv", "a")
+
+
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
@@ -231,14 +250,15 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     line = (cls, *xywh, conf) if save_conf else (cls, *xywh)# label format
                     label_tmp = [str(round(line[0].item()))] + [str(i) for i in line[1:]]
                     Lable_Result +=[" ".join(label_tmp)]
-                    print("line is here", label_tmp)
+                    #print("line is here", label_tmp)
                     #with open(txt_path + '.txt', 'a') as f:
                     #    f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        if cls ==3:
+                            annotator.box_label(xyxy, label, color=colors(c, True))
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
@@ -247,40 +267,67 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
             # Stream results
             im0 = annotator.result()
-            Video = source.split("/")[-1]
-            os.system("rm  csv/" + Video+".csv")
-            #FF = open("csv/" + Video+".csv", "w")
-            #FF.close()
-            FF = open("csv/" + Video+".csv", "a")
+
+
+            ############
+            ### Karobben
+            ############
+
+            if chain_det:
+                '''
+                Detect the chains by distance
+                '''
+                from utils import Chain_detect
+                TB = pd.DataFrame([i.split(" ") for i in Lable_Result], dtype=np.int64)
+                TB[0] = pd.to_numeric(TB[0])
+                AA = Chain_detect.Chain_finder(TB)
+                print(AA.Chain_result)
+                #annotator.box_label((100, 500,200,700), "I am Here!!", color=(0,0,0))
+                if view_img:
+                    for Box in AA.Chain_result:
+                        BOX = ( (Box[0][0]-Box[0][2]/2) * 1920,
+                                (Box[0][1]-Box[0][3]/2) * 1080,
+                                (Box[1][0]+Box[1][2]/2) * 1920,
+                                (Box[1][1]+Box[1][3]/2) * 1080
+                                )
+                        annotator.box_label(BOX, "Chain_chasing", color=(0,0,0))
+
+            if bh_count:
+                Lable_Result_2 = [str(Num_frame)+" "+i for i in Lable_Result]
+                bg_csv = "\n".join(Lable_Result_2)+ "\n"
+                #print(bg_csv)
+                #BG_counts = [i.split(" ")[0] for i in Lable_Result_2]
+                FF.write(bg_csv)
+
             if img_save:
                 similar_thread = 300000
                 #print(len(im0),len(im0[0]), type(xyxy[0]))
-                print(Lable_Result)
-                print("\n".join(Lable_Result))
+                #print(Lable_Result)
+                #print("\n".join(Lable_Result))
                 #print("Frame", Num_frame)
                 #print(Num_frame, [i.split(" ")[0] for i in Lable_Result].count("3.0"))
-                FF.write(str(Num_frame)+ " " +str([i.split(" ")[0] for i in Lable_Result].count("3.0")) + "\n")
                 try:
                     img_now = Frame_monochrom(im0)
                     img_similar = sum(abs(img_tmp-img_now)).sum()
-                    print("\n\nWhat a bs\n\n", img_similar)
+                    #print("\n\nWhat a bs\n\n", img_similar)
                     if img_similar > similar_thread:
                         img_tmp = img_now
                 except:
                     img_tmp = Frame_monochrom(im0)
                     img_similar = 1 + similar_thread
-                print("img_similar", img_similar)
+                #print("img_similar", img_similar)
                 '''
                 if Num_frame % 99 ==0:
                     '''
                 if img_similar > similar_thread:
-                    cv2.imwrite("png/fly_"+ Video + "_frame_"+ str(Num_frame) +'_.png',im0s)
-                    F = open("png/fly_"+ Video + "_frame_"+ str(Num_frame) +'_.txt', "w")
+                    cv2.imwrite("../png_DB/png/fly_"+ Video + "_frame_"+ str(Num_frame) +'_.png',im0s)
+                    F = open("../png_DB/png/fly_"+ Video + "_frame_"+ str(Num_frame) +'_.txt', "w")
                     F.write("\n".join(Lable_Result))
                     F.close()
 
+
+
             if view_img:
-                Num_frame += 1
                 try:
                     cv2.imshow(str(p), im0)
                 except:
@@ -288,7 +335,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 ## show and save the image here
                 cv2.waitKey(1)  # 1 millisecond
 
-            FF.close()
             # Save results (image with detections)
             if save_img:
                 if dataset.mode == 'image':
@@ -346,6 +392,8 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     parser.add_argument('--img-save', action='store_true', help='save the images and annotations into png directory')
+    parser.add_argument('--bh-count', action='store_true', help='Count and save the behaviors')
+    parser.add_argument('--chain-det', action='store_true', help='Chain_behhaviours detect')
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(FILE.stem, opt)
