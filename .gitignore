@@ -35,7 +35,6 @@ data/*
 
 other_tools
 csv/*
-csv*
 csv_model_600_l
 csv_mode*
 test*
